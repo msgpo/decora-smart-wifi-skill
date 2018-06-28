@@ -20,16 +20,10 @@ __author__ = 'PCWii'
 LOGGER = getLogger(__name__)
 
 # List each of the bulbs here
-decora_email = ""
-decora_pass = ""
-session = DecoraWiFiSession()
-session.login(decora_email, decora_pass)
-perms = session.user.get_residential_permissions() # Usually just one of these
+ # Usually just one of these
 
 
 def getSwitch:
-    attribs = {}
-    attribs['brightness'] = decora_bright
     for permission in perms:
         acct = ResidentialAccount(session, permission.residentialAccountId)
         residences = acct.get_residences()
@@ -47,14 +41,22 @@ def getSwitch:
 # "class ____Skill(MycroftSkill)"
 class DecoraWifiSkill(MycroftSkill):
 
+
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
         super(DecoraWifiSkill, self).__init__(name="DecoraWifiSkill")
+
+        self.settings["email"] = ""
+        self.settings["password"] = ""
 
     # This method loads the files needed for the skill's functioning, and
     # creates and registers each intent that the skill uses
     def initialize(self):
         self.load_data_files(dirname(__file__))
+
+        # Check and then monitor for credential changes
+        self.settings.set_changed_callback(self.on_websettings_changed)
+        self.on_websettings_changed()
 
         decora_light_on_intent = IntentBuilder("DecoraWifiOnIntent").\
             require("DeviceKeyword").require("OnKeyword").\
@@ -76,6 +78,20 @@ class DecoraWifiSkill(MycroftSkill):
             optionally("Lightkeyword").build()
         self.register_intent(decora_light_set_intent, self.handle_decora_light_set_intent)
 
+    def on_websettings_changed(self):
+        if not self._is_setup:
+            email = self.settings.get("email", "")
+            password = self.settings.get("password", "")
+            try:
+                if email and password:
+                    email = self.settings["email"]
+                    password = self.settings["password"]
+                    session = DecoraWiFiSession()
+                    session.login(email, password)
+                    perms = session.user.get_residential_permissions()
+                    self._is_setup = True
+            except Exception as e:
+                LOG.error(e)
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
     # each of the skill's intents is triggered: in this case, he simply
