@@ -8,8 +8,6 @@ from os.path import dirname
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
-from time import sleep
-import math
 import re
 from decora_wifi import DecoraWiFiSession
 from decora_wifi.models.residential_account import ResidentialAccount
@@ -27,6 +25,22 @@ decora_pass = ""
 session = DecoraWiFiSession()
 session.login(decora_email, decora_pass)
 perms = session.user.get_residential_permissions() # Usually just one of these
+
+
+def getSwitch:
+    attribs = {}
+    attribs['brightness'] = decora_bright
+    for permission in perms:
+        acct = ResidentialAccount(session, permission.residentialAccountId)
+        residences = acct.get_residences()
+        for residence in residences:
+            switches = residence.get_iot_switches()
+            for switch in switches:
+                setSwitch = switch
+                break
+            break
+        break
+    return setSwitch
 
 # The logic of each skill is contained within its own class, which inherits
 # base methods from the MycroftSkill class with the syntax you can see below:
@@ -70,34 +84,26 @@ class DecoraWifiSkill(MycroftSkill):
     # of a file in the dialog folder, and Mycroft speaks its contents when
     # the method is called.
     def handle_decora_light_on_intent(self, message):
-        bulbRHS.turn_on()
-        sleep(1)
-        bulbLHS.turn_on()
-        sleep(1)
-        bulbRHS.set_brightness(100, duration=5000)
-        sleep(1)
-        bulbLHS.set_brightness(100, duration=5000)
+        mySwitch = getSwitch()
+        mySwitch.update_attributes({'power': 'ON', 'brightness': '100'})
         self.speak_dialog("light.on")
 
     def handle_decora_light_off_intent(self, message):
-        bulbRHS.turn_off(duration=5000)
-        sleep(1)
-        bulbLHS.turn_off(duration=5000)
+        mySwitch = getSwitch()
+        mySwitch.update_attributes({'power': 'OFF'})
         self.speak_dialog("light.off")
 
     def handle_decora_light_dim_intent(self, message):
-        bulbRHS.set_brightness(5, duration=5000)
-        sleep(1)
-        bulbLHS.set_brightness(5, duration=5000)
+        mySwitch = getSwitch()
+        mySwitch.update_attributes({'brightness': '5'})
         self.speak_dialog("light.dim")
 
     def handle_decora_light_set_intent(self, message):
         str_remainder = str(message.utterance_remainder())
         dim_level = re.findall('\d+', str_remainder)
         if dim_level:
-            bulbLHS.set_brightness(int(dim_level[0]), duration=5000)
-            sleep(1)
-            bulbRHS.set_brightness(int(dim_level[0]), duration=5000)
+            mySwitch = getSwitch()
+            mySwitch.update_attributes({'brightness': dim_level[0]})
             self.speak_dialog("light.set", data={"result": str(dim_level[0])+ ", percent"})
 
     # The "stop" method defines what Mycroft does when told to stop during
