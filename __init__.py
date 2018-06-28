@@ -19,11 +19,6 @@ __author__ = 'PCWii'
 # statements will show up in the command line when running Mycroft.
 LOGGER = getLogger(__name__)
 
-# List each of the bulbs here
- # Usually just one of these
-
-
-
 
 # The logic of each skill is contained within its own class, which inherits
 # base methods from the MycroftSkill class with the syntax you can see below:
@@ -49,6 +44,7 @@ class DecoraWifiSkill(MycroftSkill):
         # Check and then monitor for credential changes
         self.settings.set_changed_callback(self.on_websettings_changed)
         self.on_websettings_changed()
+
 
         decora_light_on_intent = IntentBuilder("DecoraWifiOnIntent").\
             require("DeviceKeyword").require("OnKeyword").\
@@ -85,19 +81,6 @@ class DecoraWifiSkill(MycroftSkill):
             except Exception as e:
                 LOG.error(e)
 
-    def getSwitch(self):
-        for permission in self.perms:
-            acct = ResidentialAccount(self.session, permission.residentialAccountId)
-            residences = acct.get_residences()
-            for residence in residences:
-                switches = residence.get_iot_switches()
-                for switch in switches:
-                    setSwitch = switch
-                    break
-                break
-            break
-        return setSwitch
-
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
     # each of the skill's intents is triggered: in this case, he simply
     # speaks a response. Note that the "speak_dialog" method doesn't
@@ -105,17 +88,44 @@ class DecoraWifiSkill(MycroftSkill):
     # of a file in the dialog folder, and Mycroft speaks its contents when
     # the method is called.
     def handle_decora_light_on_intent(self, message):
-        mySwitch = getSwitch()
+        for permission in self.perms:
+            acct = ResidentialAccount(self.session, permission.residentialAccountId)
+            residences = acct.get_residences()
+            for residence in residences:
+                switches = residence.get_iot_switches()
+                for switch in switches:
+                    mySwitch = switch
+                    break
+                break
+            break
         mySwitch.update_attributes({'power': 'ON', 'brightness': '100'})
         self.speak_dialog("light.on")
 
     def handle_decora_light_off_intent(self, message):
-        mySwitch = getSwitch()
+        for permission in self.perms:
+            acct = ResidentialAccount(self.session, permission.residentialAccountId)
+            residences = acct.get_residences()
+            for residence in residences:
+                switches = residence.get_iot_switches()
+                for switch in switches:
+                    mySwitch = switch
+                    break
+                break
+            break
         mySwitch.update_attributes({'power': 'OFF'})
         self.speak_dialog("light.off")
 
     def handle_decora_light_dim_intent(self, message):
-        mySwitch = getSwitch()
+        for permission in self.perms:
+            acct = ResidentialAccount(self.session, permission.residentialAccountId)
+            residences = acct.get_residences()
+            for residence in residences:
+                switches = residence.get_iot_switches()
+                for switch in switches:
+                    mySwitch = switch
+                    break
+                break
+            break
         mySwitch.update_attributes({'brightness': '5'})
         self.speak_dialog("light.dim")
 
@@ -123,7 +133,16 @@ class DecoraWifiSkill(MycroftSkill):
         str_remainder = str(message.utterance_remainder())
         dim_level = re.findall('\d+', str_remainder)
         if dim_level:
-            mySwitch = getSwitch()
+            for permission in self.perms:
+                acct = ResidentialAccount(self.session, permission.residentialAccountId)
+                residences = acct.get_residences()
+                for residence in residences:
+                    switches = residence.get_iot_switches()
+                    for switch in switches:
+                        mySwitch = switch
+                        break
+                    break
+                break
             mySwitch.update_attributes({'brightness': dim_level[0]})
             self.speak_dialog("light.set", data={"result": str(dim_level[0])+ ", percent"})
 
