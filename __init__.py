@@ -23,18 +23,7 @@ LOGGER = getLogger(__name__)
  # Usually just one of these
 
 
-def getSwitch:
-    for permission in perms:
-        acct = ResidentialAccount(session, permission.residentialAccountId)
-        residences = acct.get_residences()
-        for residence in residences:
-            switches = residence.get_iot_switches()
-            for switch in switches:
-                setSwitch = switch
-                break
-            break
-        break
-    return setSwitch
+
 
 # The logic of each skill is contained within its own class, which inherits
 # base methods from the MycroftSkill class with the syntax you can see below:
@@ -48,6 +37,9 @@ class DecoraWifiSkill(MycroftSkill):
 
         self.settings["email"] = ""
         self.settings["password"] = ""
+        self.session = ""
+        self.perms = []
+        self._is_setup = False
 
     # This method loads the files needed for the skill's functioning, and
     # creates and registers each intent that the skill uses
@@ -86,12 +78,25 @@ class DecoraWifiSkill(MycroftSkill):
                 if email and password:
                     email = self.settings["email"]
                     password = self.settings["password"]
-                    session = DecoraWiFiSession()
-                    session.login(email, password)
-                    perms = session.user.get_residential_permissions()
+                    self.session = DecoraWiFiSession()
+                    self.session.login(email, password)
+                    self.perms = self.session.user.get_residential_permissions()
                     self._is_setup = True
             except Exception as e:
                 LOG.error(e)
+
+    def getSwitch(self):
+        for permission in self.perms:
+            acct = ResidentialAccount(self.session, permission.residentialAccountId)
+            residences = acct.get_residences()
+            for residence in residences:
+                switches = residence.get_iot_switches()
+                for switch in switches:
+                    setSwitch = switch
+                    break
+                break
+            break
+        return setSwitch
 
     # The "handle_xxxx_intent" functions define Mycroft's behavior when
     # each of the skill's intents is triggered: in this case, he simply
