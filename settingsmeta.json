@@ -1,10 +1,14 @@
 {
-    "name": "Decora WiFi",
+    "name": "Decora WiFi Dimmer Control Skill",
     "skillMetadata": {
         "sections": [
             {
-                "name": "Login",
+                "name": "Settings",
                 "fields": [
+                    {
+                        "type": "label",
+                        "label": "Enter your e-mail and password as it was configured for https://my.leviton.com/home/#/accounts/login"
+                    },
                     {
                         "name": "email",
                         "type": "email",
