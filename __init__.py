@@ -5,10 +5,14 @@
 # along with Mycroft Core.  If not, see <http://www.gnu.org/licenses/>.
 
 from os.path import dirname
+
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
+from mycroft.util.log import LOG
+
 import re
+
 from decora_wifi import DecoraWiFiSession
 from decora_wifi.models.residential_account import ResidentialAccount
 
@@ -25,11 +29,9 @@ LOGGER = getLogger(__name__)
 # "class ____Skill(MycroftSkill)"
 class DecoraWifiSkill(MycroftSkill):
 
-
     # The constructor of the skill, which calls MycroftSkill's constructor
     def __init__(self):
         super(DecoraWifiSkill, self).__init__(name="DecoraWifiSkill")
-
         self.settings["email"] = ""
         self.settings["password"] = ""
         self.session = ""
@@ -44,7 +46,6 @@ class DecoraWifiSkill(MycroftSkill):
         # Check and then monitor for credential changes
         self.settings.set_changed_callback(self.on_websettings_changed)
         self.on_websettings_changed()
-
 
         decora_light_on_intent = IntentBuilder("DecoraWifiOnIntent").\
             require("DeviceKeyword").require("OnKeyword").\
@@ -82,61 +83,50 @@ class DecoraWifiSkill(MycroftSkill):
                     self.session.login(email, password)
                     self.perms = self.session.user.get_residential_permissions()
                     self._is_setup = True
+                    LOG.info('Information Successfully retrieved from https://home.mycroft.ai')
             except Exception as e:
                 LOG.error(e)
 
-    # The "handle_xxxx_intent" functions define Mycroft's behavior when
-    # each of the skill's intents is triggered: in this case, he simply
-    # speaks a response. Note that the "speak_dialog" method doesn't
-    # actually speak the text it's passed--instead, that text is the filename
-    # of a file in the dialog folder, and Mycroft speaks its contents when
-    # the method is called.
-    def handle_decora_light_on_intent(self, message):
-        silent_kw = message.data.get("SilentKeyword")
+    def get_switch_id(self):
         for permission in self.perms:
             acct = ResidentialAccount(self.session, permission.residentialAccountId)
             residences = acct.get_residences()
+            LOG.info('Residences found :' + str(residences))
             for residence in residences:
                 switches = residence.get_iot_switches()
+                LOG.info('Switches found :' + str(switches))
                 for switch in switches:
-                    my_switch = switch
+                    switch_id = switch
                     break
                 break
             break
+        return switch_id
+
+    def handle_decora_light_on_intent(self, message):
+        silent_kw = message.data.get("SilentKeyword")
+        my_switch = self.get_switch_id()
         my_switch.update_attributes({'power': 'ON', 'brightness': '100'})
-        if not silent_kw:
+        if silent_kw:
+            LOG.info('Light Turned On')
+        else:
             self.speak_dialog("light.on")
 
     def handle_decora_light_off_intent(self, message):
         silent_kw = message.data.get("SilentKeyword")
-        for permission in self.perms:
-            acct = ResidentialAccount(self.session, permission.residentialAccountId)
-            residences = acct.get_residences()
-            for residence in residences:
-                switches = residence.get_iot_switches()
-                for switch in switches:
-                    my_switch = switch
-                    break
-                break
-            break
+        my_switch = self.get_switch_id()
         my_switch.update_attributes({'power': 'OFF'})
-        if not silent_kw:
+        if silent_kw:
+            LOG.info('Light Turned Off')
+        else:
             self.speak_dialog("light.off")
 
     def handle_decora_light_dim_intent(self, message):
         silent_kw = message.data.get("SilentKeyword")
-        for permission in self.perms:
-            acct = ResidentialAccount(self.session, permission.residentialAccountId)
-            residences = acct.get_residences()
-            for residence in residences:
-                switches = residence.get_iot_switches()
-                for switch in switches:
-                    my_switch = switch
-                    break
-                break
-            break
+        my_switch = self.get_switch_id()
         my_switch.update_attributes({'brightness': '5'})
-        if not silent_kw:
+        if silent_kw:
+            LOG.info('Light Dimmed')
+        else:
             self.speak_dialog("light.dim")
 
     def handle_decora_light_set_intent(self, message):
@@ -144,18 +134,11 @@ class DecoraWifiSkill(MycroftSkill):
         str_remainder = str(message.utterance_remainder())
         dim_level = re.findall('\d+', str_remainder)
         if dim_level:
-            for permission in self.perms:
-                acct = ResidentialAccount(self.session, permission.residentialAccountId)
-                residences = acct.get_residences()
-                for residence in residences:
-                    switches = residence.get_iot_switches()
-                    for switch in switches:
-                        my_switch = switch
-                        break
-                    break
-                break
+            my_switch = self.get_switch_id()
             my_switch.update_attributes({'brightness': dim_level[0]})
-            if not silent_kw:
+            if silent_kw:
+                LOG.info('Light Set To: ' + str(dim_level[0]) + '%')
+            else:
                 self.speak_dialog("light.set", data={"result": str(dim_level[0])+ ", percent"})
 
     # The "stop" method defines what Mycroft does when told to stop during
