@@ -10,6 +10,7 @@ from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
 from mycroft.util.log import LOG
+from time import sleep
 
 import re
 
@@ -50,13 +51,13 @@ class DecoraWifiSkill(MycroftSkill):
         decora_light_on_intent = IntentBuilder("DecoraWifiOnIntent").\
             require("DeviceKeyword").require("OnKeyword").\
             optionally("LightKeyword").\
-            optionally("SilentKeyword").build()
+            optionally("SilentKeyword").optionally("DelayKeyword").build()
         self.register_intent(decora_light_on_intent, self.handle_decora_light_on_intent)
 
         decora_light_off_intent = IntentBuilder("DecoraWifiOffIntent").\
             require("DeviceKeyword").require("OffKeyword").\
             optionally("LightKeyword").\
-            optionally("SilentKeyword").build()
+            optionally("SilentKeyword").optionally("DelayKeyword").build()
         self.register_intent(decora_light_off_intent, self.handle_decora_light_off_intent)
 
         decora_light_dim_intent = IntentBuilder("DecoraWifiDimIntent").\

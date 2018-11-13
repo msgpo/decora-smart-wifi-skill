@@ -1,0 +1,1 @@
+(?P<Durration>\d+) (?P<Interval>seconds|minutes|hours)
