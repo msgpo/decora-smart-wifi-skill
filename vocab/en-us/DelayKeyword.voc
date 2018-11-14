@@ -1,2 +1,0 @@
-(?P<Durration>\d+) (?P<Interval>seconds|minutes|hours)
-(hours|minutes|seconds)
