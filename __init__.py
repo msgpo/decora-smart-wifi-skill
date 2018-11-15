@@ -120,7 +120,7 @@ class DecoraWifiSkill(MycroftSkill):
     def handle_decora_light_on_intent(self, message):
         silent_kw = message.data.get("SilentKeyword")
         delay_kw = self.delay_regex(message.utterance_remainder())
-        LOG.info('delay :', delay_kw)
+        LOG.info('delay on:', delay_kw)
         my_switch = self.get_switch_id()
         my_switch.update_attributes({'power': 'ON', 'brightness': '100'})
         if silent_kw:
@@ -131,7 +131,7 @@ class DecoraWifiSkill(MycroftSkill):
     def handle_decora_light_off_intent(self, message):
         silent_kw = message.data.get("SilentKeyword")
         delay_kw = self.delay_regex(message.utterance_remainder())
-        LOG.info('delay :', delay_kw)
+        LOG.info('delay off:', delay_kw)
         my_switch = self.get_switch_id()
         my_switch.update_attributes({'power': 'OFF'})
         if silent_kw:
