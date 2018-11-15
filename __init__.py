@@ -104,6 +104,7 @@ class DecoraWifiSkill(MycroftSkill):
         return switch_id
 
     def delay_regex(self, req_string):  # extract the delay time
+        LOG.info('processing time delay regex : ' + str(req_string))
         pri_regex = re.search(r'((?P<Duration>\d+) (?P<Interval>seconds|minutes|hours))', req_string)
         if pri_regex:
             duration_result = pri_regex.group('Duration')
