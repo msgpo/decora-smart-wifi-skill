@@ -72,8 +72,6 @@ class DecoraWifiSkill(MycroftSkill):
             optionally("SilentKeyword").build()
         self.register_intent(decora_light_set_intent, self.handle_decora_light_set_intent)
 
-
-
     def on_websettings_changed(self):
         if not self._is_setup:
             email = self.settings.get("email", "")
