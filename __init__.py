@@ -51,15 +51,13 @@ class DecoraWifiSkill(MycroftSkill):
         decora_light_on_intent = IntentBuilder("DecoraWifiOnIntent").\
             require("DeviceKeyword").require("OnKeyword").\
             optionally("LightKeyword").\
-            optionally("SilentKeyword").\
-            optionally("DelayKeyword").build()
+            optionally("SilentKeyword").build()
         self.register_intent(decora_light_on_intent, self.handle_decora_light_on_intent)
 
         decora_light_off_intent = IntentBuilder("DecoraWifiOffIntent").\
             require("DeviceKeyword").require("OffKeyword").\
             optionally("LightKeyword").\
-            optionally("SilentKeyword").\
-            optionally("DelayKeyword").build()
+            optionally("SilentKeyword").build()
         self.register_intent(decora_light_off_intent, self.handle_decora_light_off_intent)
 
         decora_light_dim_intent = IntentBuilder("DecoraWifiDimIntent").\
@@ -73,6 +71,8 @@ class DecoraWifiSkill(MycroftSkill):
             optionally("LightKeyword").\
             optionally("SilentKeyword").build()
         self.register_intent(decora_light_set_intent, self.handle_decora_light_set_intent)
+
+
 
     def on_websettings_changed(self):
         if not self._is_setup:
@@ -105,9 +105,23 @@ class DecoraWifiSkill(MycroftSkill):
             break
         return switch_id
 
+    def delay_regex(self, req_string):  # extract the delay time
+        pri_regex = re.search(r'((?P<Duration>\d+) (?P<Interval>seconds|minutes|hours))', req_string)
+        if pri_regex:
+            duration_result = pri_regex.group('Duration')
+            interval_result = pri_regex.group('Interval')
+            if interval_result == 'seconds':
+                return_value = int(duration_result)
+            if interval_result == 'minutes':
+                return_value = int(duration_result) * 60
+            if interval_result == 'hours':
+                return_value = int(duration_result) * 3600
+            LOG.info('regex returned: ' + str(return_value))
+            return return_value
+
     def handle_decora_light_on_intent(self, message):
         silent_kw = message.data.get("SilentKeyword")
-        delay_kw = message.data.get("DelayKeyword")
+        delay_kw = self.delay_regex(message.utterance_remainder())
         LOG.info('delay :', delay_kw)
         my_switch = self.get_switch_id()
         my_switch.update_attributes({'power': 'ON', 'brightness': '100'})
@@ -118,7 +132,7 @@ class DecoraWifiSkill(MycroftSkill):
 
     def handle_decora_light_off_intent(self, message):
         silent_kw = message.data.get("SilentKeyword")
-        delay_kw = message.data.get("DelayKeyword")
+        delay_kw = self.delay_regex(message.utterance_remainder())
         LOG.info('delay :', delay_kw)
         my_switch = self.get_switch_id()
         my_switch.update_attributes({'power': 'OFF'})
