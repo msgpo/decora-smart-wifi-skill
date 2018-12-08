@@ -105,15 +105,15 @@ class DecoraWifiSkill(MycroftSkill):
 
     def delay_regex(self, req_string):  # extract the delay time
         LOG.info('processing time delay regex : ' + str(req_string))
-        pri_regex = re.search(r'((?P<Duration>\d+) (?P<Interval>seconds|minutes|hours))', req_string)
+        pri_regex = re.search(r'((?P<Duration>\d+) (?P<Interval>seconds|second|minutes|minute|hours|hour))', req_string)
         if pri_regex:
             duration_result = pri_regex.group('Duration')
             interval_result = pri_regex.group('Interval')
-            if interval_result == 'seconds':
+            if (interval_result == 'seconds') or (interval_result == 'second'):
                 return_value = int(duration_result)
-            if interval_result == 'minutes':
+            if (interval_result == 'minutes') or (interval_result == 'minute'):
                 return_value = int(duration_result) * 60
-            if interval_result == 'hours':
+            if (interval_result == 'hours') or (interval_result == 'hour'):
                 return_value = int(duration_result) * 3600
             LOG.info('regex returned: ' + str(return_value))
             return return_value
